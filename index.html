@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chocolate Crash</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Fredoka', sans-serif;
+      background: url('Flux_Dev_a_lush_3d_render_of_same_image_create_3D_model_excite_1.jpg') no-repeat center center fixed;
+      background-size: cover;
+      text-align: center;
+      color: #5a2a0c;
+    }
+    h1 {
+      margin-top: 20px;
+      font-size: 3rem;
+      font-weight: 700;
+      color: #ff4081;
+      text-shadow: 2px 2px #fff176;
+    }
+    #startBtn {
+      padding: 15px 35px;
+      font-size: 1.4rem;
+      border: none;
+      border-radius: 30px;
+      background: linear-gradient(to right, #ff8a65, #ff5252);
+      color: white;
+      box-shadow: 0 5px #c62828;
+      cursor: pointer;
+    }
+    #startBtn:active {
+      box-shadow: 0 2px #c62828;
+      transform: translateY(3px);
+    }
+    .info {
+      margin: 20px auto;
+      display: flex;
+      justify-content: space-around;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 15px;
+      padding: 12px 25px;
+      max-width: 400px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      font-size: 1.2rem;
+    }
+    .grid {
+      width: fit-content;
+      margin: 20px auto;
+      display: grid;
+      grid-template-columns: repeat(8, 55px);
+      grid-template-rows: repeat(8, 55px);
+      gap: 5px;
+      border-radius: 25px;
+      background: rgba(255, 255, 255, 0.7);
+      box-shadow: inset 0 0 20px #ffebee;
+      padding: 6px;
+    }
+    .square {
+      width: 55px;
+      height: 55px;
+      border-radius: 12px;
+      background-color: #fff;
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+    @media (max-width: 480px) {
+      .grid {
+        grid-template-columns: repeat(8, 40px);
+        grid-template-rows: repeat(8, 40px);
+        gap: 4px;
+      }
+      .square {
+        width: 40px;
+        height: 40px;
+      }
+    }
+    #banner-ad {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      z-index: 9999;
+    }
+  </style>
+</head>
+<body>
+  <!-- ✅ Banner Ad at the bottom -->
+  <div id="banner-ad">
+    <script type="text/javascript">
+      atOptions = {
+        'key' : '586f3a7fc60772622aa7fd5d0d96b4eb',
+        'format' : 'iframe',
+        'height' : 50,
+        'width' : 320,
+        'params' : {}
+      };
+    </script>
+    <script type="text/javascript" src="//www.highperformanceformat.com/586f3a7fc60772622aa7fd5d0d96b4eb/invoke.js"></script>
+  </div>
+
+  <h1>Chocolate Crash</h1>
+  <button id="startBtn">Start Game</button>
+  <div class="info">
+    <div>Score: <span id="score">0</span></div>
+    <div>Time: <span id="time">0</span> sec</div>
+  </div>
+  <div class="grid" id="grid"></div>
+
+  <audio id="gameSound" src="https://www.myinstants.com/media/sounds/coin.mp3"></audio>
+  <audio id="bonusSound" src="https://www.myinstants.com/media/sounds/bonus.mp3"></audio>
+
+<!-- ✅ Interstitial Ad (every 5 minutes) -->
+<div id="interstitial-ad">
+  <div class="content">
+    <!-- Actual ad script -->
+    <script type='text/javascript' src='//pl26799945.profitableratecpm.com/5e/96/31/5e9631032f2e36ce1f0d49038b1e2e08.js'></script>
+    <button onclick="closeInterstitial()">Close</button>
+  </div>
+</div>
+
+  <script>
+    const grid = document.getElementById('grid');
+    const scoreDisplay = document.getElementById('score');
+    const timeDisplay = document.getElementById('time');
+    const startBtn = document.getElementById('startBtn');
+
+    const width = 8;
+    const squares = [];
+    const images = [
+      '20250531_025206.jpg',
+      '20250531_025412.jpg',
+      '20250531_025718.jpg',
+      '20250531_030436.jpg',
+      '20250531_031235.jpg',
+      'images (40).jpeg'
+    ];
+
+    let score = 0;
+    let timer = 0;
+    let interval;
+    const gameTimeLimit = 300;
+    let colorBeingDragged, colorBeingReplaced, squareIdDragged, squareIdReplaced;
+
+    function createBoard() {
+      grid.innerHTML = '';
+      squares.length = 0;
+      for (let i = 0; i < width * width; i++) {
+        const square = document.createElement('div');
+        square.setAttribute('draggable', true);
+        square.setAttribute('id', i);
+        square.classList.add('square');
+        let randImage = images[Math.floor(Math.random() * images.length)];
+        square.style.backgroundImage = `url(${randImage})`;
+        grid.appendChild(square);
+        squares.push(square);
+      }
+      addTouchListeners();
+    }
+
+    function dragStart() {
+      colorBeingDragged = this.style.backgroundImage;
+      squareIdDragged = parseInt(this.id);
+    }
+
+    function dragDrop() {
+      colorBeingReplaced = this.style.backgroundImage;
+      squareIdReplaced = parseInt(this.id);
+      this.style.backgroundImage = colorBeingDragged;
+      squares[squareIdDragged].style.backgroundImage = colorBeingReplaced;
+    }
+
+    function dragEnd() {
+      let validMoves = [
+        squareIdDragged - 1,
+        squareIdDragged + 1,
+        squareIdDragged - width,
+        squareIdDragged + width
+      ];
+      if (!validMoves.includes(squareIdReplaced)) {
+        squares[squareIdReplaced].style.backgroundImage = colorBeingReplaced;
+        squares[squareIdDragged].style.backgroundImage = colorBeingDragged;
+        return;
+      }
+      gameLoop(); // run to check match
+    }
+
+    function checkRow(n) {
+      for (let i = 0; i < width * width; i++) {
+        const rowStart = i % width;
+        if (rowStart > width - n) continue;
+        const row = Array.from({ length: n }, (_, j) => i + j);
+        const decidedColor = squares[i].style.backgroundImage;
+        if (decidedColor && row.every(idx => squares[idx].style.backgroundImage === decidedColor)) {
+          row.forEach(idx => squares[idx].style.backgroundImage = '');
+          updateScore(n);
+        }
+      }
+    }
+
+    function checkColumn(n) {
+      for (let i = 0; i <= width * (width - n); i++) {
+        const column = Array.from({ length: n }, (_, j) => i + j * width);
+        const decidedColor = squares[i].style.backgroundImage;
+        if (decidedColor && column.every(idx => squares[idx].style.backgroundImage === decidedColor)) {
+          column.forEach(idx => squares[idx].style.backgroundImage = '');
+          updateScore(n);
+        }
+      }
+    }
+
+    function moveDown() {
+      for (let i = width * (width - 1) - 1; i >= 0; i--) {
+        if (squares[i + width].style.backgroundImage === '') {
+          squares[i + width].style.backgroundImage = squares[i].style.backgroundImage;
+          squares[i].style.backgroundImage = '';
+        }
+      }
+
+      for (let i = 0; i < width; i++) {
+        if (squares[i].style.backgroundImage === '') {
+          let randImage = images[Math.floor(Math.random() * images.length)];
+          squares[i].style.backgroundImage = `url(${randImage})`;
+        }
+      }
+    }
+
+    function updateScore(n) {
+      score += n * 10;
+      scoreDisplay.textContent = score;
+      console.log(`Matched ${n} candies!`);
+    }
+
+    function gameLoop() {
+      checkRow(5); checkRow(4); checkRow(3);
+      checkColumn(5); checkColumn(4); checkColumn(3);
+      moveDown();
+    }
+
+    function startGame() {
+      score = 0;
+      timer = 0;
+      scoreDisplay.textContent = score;
+      timeDisplay.textContent = timer;
+      createBoard();
+      clearInterval(interval);
+      interval = setInterval(() => {
+        timer++;
+        timeDisplay.textContent = timer;
+        gameLoop();
+        if (timer >= gameTimeLimit) {
+          clearInterval(interval);
+          alert(`⏰ Time's up! Your final score is: ${score}`);
+        }
+      }, 300);
+    }
+
+    startBtn.addEventListener('click', startGame);
+
+    document.addEventListener('dragstart', e => {
+      if (e.target.classList.contains('square')) dragStart.call(e.target);
+    });
+    document.addEventListener('dragover', e => e.preventDefault());
+    document.addEventListener('drop', e => {
+      if (e.target.classList.contains('square')) dragDrop.call(e.target);
+    });
+    document.addEventListener('dragend', e => {
+      if (e.target.classList.contains('square')) dragEnd.call(e.target);
+    });
+
+    function addTouchListeners() {
+      squares.forEach(square => {
+        let touchStartX, touchStartY, touchStartIndex;
+
+        square.addEventListener('touchstart', e => {
+          const touch = e.touches[0];
+          touchStartX = touch.clientX;
+          touchStartY = touch.clientY;
+          touchStartIndex = parseInt(square.id);
+        });
+
+        square.addEventListener('touchend', e => {
+          const touch = e.changedTouches[0];
+          const deltaX = touch.clientX - touchStartX;
+          const deltaY = touch.clientY - touchStartY;
+          const absX = Math.abs(deltaX);
+          const absY = Math.abs(deltaY);
+          let direction = null;
+
+          if (Math.max(absX, absY) > 20) {
+            if (absX > absY) direction = deltaX > 0 ? 'right' : 'left';
+            else direction = deltaY > 0 ? 'down' : 'up';
+
+            let swapIndex;
+            if (direction === 'right' && (touchStartIndex % width !== width - 1)) swapIndex = touchStartIndex + 1;
+            else if (direction === 'left' && (touchStartIndex % width !== 0)) swapIndex = touchStartIndex - 1;
+            else if (direction === 'up' && touchStartIndex >= width) swapIndex = touchStartIndex - width;
+            else if (direction === 'down' && touchStartIndex < width * (width - 1)) swapIndex = touchStartIndex + width;
+
+            if (swapIndex !== undefined) {
+              const draggedColor = squares[touchStartIndex].style.backgroundImage;
+              const targetColor = squares[swapIndex].style.backgroundImage;
+              squares[touchStartIndex].style.backgroundImage = targetColor;
+              squares[swapIndex].style.backgroundImage = draggedColor;
+
+              squareIdDragged = touchStartIndex;
+              squareIdReplaced = swapIndex;
+              dragEnd();
+            }
+          }
+        });
+      });
+    }
+  </script>
+</body>
+</html>
